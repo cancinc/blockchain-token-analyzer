@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}New Export - Zero Network Exporter{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>New Export</h1>
+        <p class="lead">Create a new Zero Network transaction export</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Export Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('export') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="address_input" class="form-label">Blockchain Address(es) <span class="text-danger">*</span></label>
+                        <div class="input-group mb-3">
+                            <select class="form-select" id="address_type" style="max-width: 180px;">
+                                <option value="single">Single Address</option>
+                                <option value="multiple">Multiple Addresses</option>
+                                <option value="file">Upload Address File</option>
+                            </select>
+                            <input type="text" class="form-control single-address" id="address" name="address" 
+                                   placeholder="0x..." required>
+                            <textarea class="form-control multiple-address" id="addresses" name="addresses" 
+                                   placeholder="Enter one address per line" rows="3" style="display: none;"></textarea>
+                            <input type="file" class="form-control file-address" id="address_file" name="address_file" 
+                                   accept=".txt,.csv" style="display: none;">
+                        </div>
+                        <div class="form-text single-address-help">Enter a blockchain address to fetch transactions for</div>
+                        <div class="form-text multiple-address-help" style="display: none;">Enter multiple addresses, one per line. All transactions will be combined in a single export.</div>
+                        <div class="form-text file-address-help" style="display: none;">Upload a file with one address per line</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="token_contract" class="form-label">Token Contract (Optional)</label>
+                        <input type="text" class="form-control" id="token_contract" name="token_contract" 
+                               placeholder="0x...">
+                        <div class="form-text">Filter transactions for a specific token contract</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="max_pages" class="form-label">Max Pages</label>
+                            <input type="number" class="form-control" id="max_pages" name="max_pages" min="1">
+                            <div class="form-text">Leave empty for all pages</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="records" class="form-label">Records Per Page</label>
+                            <input type="number" class="form-control" id="records" name="records" value="100" min="1" max="1000">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="sort" class="form-label">Sort Order</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="asc">Ascending (oldest first)</option>
+                                <option value="desc">Descending (newest first)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="internal" name="internal">
+                                <label class="form-check-label" for="internal">
+                                    Fetch Internal Transactions
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="no_date_filter" name="no_date_filter">
+                            <label class="form-check-label" for="no_date_filter">
+                                Disable Date Filtering
+                            </label>
+                        </div>
+                        <div class="form-text">If unchecked, defaults to Feb 1, 2025 - Apr 5, 2025</div>
+                    </div>
+                    
+                    <div class="date-filter-group">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="2025-02-01">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="2025-04-05">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Run Export</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-dark">
+                        <strong>Address Example:</strong> 0x00b1cA2C150920F4cA57701452c63B1bA2b4b758
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Token Contract:</strong> 0x13a42408eaa5526c5e7796828C7ea244009e2439
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Max Pages:</strong> Leave empty to fetch all available pages
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Date Filtering:</strong> Use the date fields to limit results to a specific time period
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Large Exports:</strong> For very large datasets, consider limiting the max pages
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Save as Preset:</strong> Save your configuration as a preset for future use
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Toggle date filter fields based on checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        // Date filtering toggle
+        const noDateFilterCheckbox = document.getElementById('no_date_filter');
+        const dateFilterGroup = document.querySelector('.date-filter-group');
+        
+        function updateDateFilterFields() {
+            if (noDateFilterCheckbox.checked) {
+                dateFilterGroup.style.display = 'none';
+            } else {
+                dateFilterGroup.style.display = 'block';
+            }
+        }
+        
+        noDateFilterCheckbox.addEventListener('change', updateDateFilterFields);
+        updateDateFilterFields();
+        
+        // Address input type toggle
+        const addressTypeSelect = document.getElementById('address_type');
+        const singleAddressInput = document.querySelector('.single-address');
+        const multipleAddressInput = document.querySelector('.multiple-address');
+        const fileAddressInput = document.querySelector('.file-address');
+        
+        const singleAddressHelp = document.querySelector('.single-address-help');
+        const multipleAddressHelp = document.querySelector('.multiple-address-help');
+        const fileAddressHelp = document.querySelector('.file-address-help');
+        
+        function updateAddressFields() {
+            const selectedType = addressTypeSelect.value;
+            
+            // Hide all
+            singleAddressInput.style.display = 'none';
+            singleAddressHelp.style.display = 'none';
+            multipleAddressInput.style.display = 'none';
+            multipleAddressHelp.style.display = 'none';
+            fileAddressInput.style.display = 'none';
+            fileAddressHelp.style.display = 'none';
+            
+            // Remove required attribute from all
+            singleAddressInput.removeAttribute('required');
+            multipleAddressInput.removeAttribute('required');
+            fileAddressInput.removeAttribute('required');
+            
+            // Show selected
+            if (selectedType === 'single') {
+                singleAddressInput.style.display = 'block';
+                singleAddressHelp.style.display = 'block';
+                singleAddressInput.setAttribute('required', 'required');
+            } else if (selectedType === 'multiple') {
+                multipleAddressInput.style.display = 'block';
+                multipleAddressHelp.style.display = 'block';
+                multipleAddressInput.setAttribute('required', 'required');
+            } else if (selectedType === 'file') {
+                fileAddressInput.style.display = 'block';
+                fileAddressHelp.style.display = 'block';
+                fileAddressInput.setAttribute('required', 'required');
+            }
+        }
+        
+        addressTypeSelect.addEventListener('change', updateAddressFields);
+        updateAddressFields();
+        
+        // Handle form submission
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const selectedType = addressTypeSelect.value;
+            
+            if (selectedType === 'multiple') {
+                // Convert textarea content to a hidden input with comma separated values
+                const addresses = multipleAddressInput.value.trim().split('\n').filter(line => line.trim().length > 0);
+                if (addresses.length === 0) {
+                    e.preventDefault();
+                    alert('Please enter at least one address');
+                    return;
+                }
+                
+                // Create hidden input for addresses
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'addresses_list';
+                hiddenInput.value = addresses.join(',');
+                form.appendChild(hiddenInput);
+            }
+        });
+    });
+</script>
+{% endblock %}

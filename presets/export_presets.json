@@ -1,0 +1,29 @@
+{
+  "default_contract": {
+    "address": "0x00b1cA2C150920F4cA57701452c63B1bA2b4b758",
+    "max_pages": 2,
+    "records": 100,
+    "sort": "asc",
+    "internal": false,
+    "fields": null
+  },
+  "march_data": {
+    "address": "0x00b1cA2C150920F4cA57701452c63B1bA2b4b758",
+    "max_pages": null,
+    "records": 100,
+    "sort": "asc",
+    "internal": false,
+    "fields": null,
+    "start_date": "2025-03-01",
+    "end_date": "2025-03-31"
+  },
+  "all_data": {
+    "address": "0x00b1cA2C150920F4cA57701452c63B1bA2b4b758",
+    "max_pages": null,
+    "records": 100,
+    "sort": "asc",
+    "internal": false,
+    "fields": null,
+    "no_date_filter": true
+  }
+}

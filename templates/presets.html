@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Presets - Zero Network Exporter{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Manage Presets</h1>
+        <p class="lead">Create and manage export configuration presets</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Current Presets</h5>
+            </div>
+            <div class="card-body">
+                {% if presets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Configuration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for name, preset in presets.items() %}
+                            <tr>
+                                <td>{{ name }}</td>
+                                <td>
+                                    {% if preset.address is string %}
+                                        {{ preset.address[:8] }}...
+                                    {% else %}
+                                        <span class="badge bg-secondary" title="{{ preset.address|length }} addresses">Batch ({{ preset.address|length }})</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>
+                                        {% if preset.max_pages %}
+                                        <span class="badge bg-primary">{{ preset.max_pages }} pages</span>
+                                        {% else %}
+                                        <span class="badge bg-primary">All pages</span>
+                                        {% endif %}
+                                        
+                                        {% if preset.internal %}
+                                        <span class="badge bg-warning">Internal</span>
+                                        {% endif %}
+                                        
+                                        {% if preset.no_date_filter %}
+                                        <span class="badge bg-info">No date filter</span>
+                                        {% elif preset.start_date or preset.end_date %}
+                                        <span class="badge bg-info">Date filtered</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('run_preset', name=name) }}" class="btn btn-success btn-sm" title="Run">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                                                <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>
+                                            </svg>
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" 
+                                                data-preset-name="{{ name }}" title="Delete">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No presets found. Create a new preset using the form.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Create New Preset</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('presets') }}">
+                    <input type="hidden" name="action" value="save">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="preset_name" class="form-label">Preset Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="preset_name" name="preset_name" 
+                                   placeholder="e.g., default_contract" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address_type" class="form-label">Address Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="address_type">
+                                <option value="single">Single Address</option>
+                                <option value="multiple">Multiple Addresses</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label address-label">Blockchain Address <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control single-address" id="address" name="address" 
+                               placeholder="0x..." value="0x00b1cA2C150920F4cA57701452c63B1bA2b4b758">
+                        <textarea class="form-control multiple-address" id="addresses" name="addresses" 
+                               placeholder="Enter one address per line" rows="3" style="display: none;"></textarea>
+                        <div class="form-text single-address-help">Enter a blockchain address to fetch transactions for</div>
+                        <div class="form-text multiple-address-help" style="display: none;">Enter multiple addresses, one per line. All transactions will be combined in a single export.</div>
+                    </div>
+                    
+                    <div class="row mb-3" style="display:none;"><!-- Placeholder to maintain layout -->
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="token_contract" class="form-label">Token Contract (Optional)</label>
+                        <input type="text" class="form-control" id="token_contract" name="token_contract" 
+                               placeholder="0x..." value="0x13a42408eaa5526c5e7796828C7ea244009e2439">
+                        <div class="form-text">Filter transactions for a specific token contract</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="max_pages" class="form-label">Max Pages</label>
+                            <input type="number" class="form-control" id="max_pages" name="max_pages" min="1">
+                            <div class="form-text">Leave empty for all pages</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="records" class="form-label">Records Per Page</label>
+                            <input type="number" class="form-control" id="records" name="records" value="100" min="1" max="1000">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sort" class="form-label">Sort Order</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="asc">Ascending (oldest first)</option>
+                                <option value="desc">Descending (newest first)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="internal" name="internal">
+                            <label class="form-check-label" for="internal">
+                                Fetch Internal Transactions
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="no_date_filter" name="no_date_filter">
+                            <label class="form-check-label" for="no_date_filter">
+                                Disable Date Filtering
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="date-filter-group">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="2025-02-01">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="2025-04-05">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save Preset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">About Presets</h5>
+            </div>
+            <div class="card-body">
+                <p>Presets allow you to save your export configurations for easy reuse. This is particularly useful for:</p>
+                <ul>
+                    <li>Commonly used contract addresses</li>
+                    <li>Specific date ranges you frequently need data for</li>
+                    <li>Different data collection settings (internal vs. token transactions)</li>
+                </ul>
+                <hr>
+                <h6>Preset Examples:</h6>
+                <ul>
+                    <li><strong>Default Contract:</strong> Basic settings for the main contract</li>
+                    <li><strong>March Data:</strong> Transactions filtered for March 2025</li>
+                    <li><strong>All Data:</strong> No date filter, get all available transactions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Preset Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the preset "<span id="presetNamePlaceholder"></span>"?
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{{ url_for('presets') }}" id="deleteForm">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="preset_name" id="delete_preset_name">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Toggle date filter fields based on checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const noDateFilterCheckbox = document.getElementById('no_date_filter');
+        const dateFilterGroup = document.querySelector('.date-filter-group');
+        
+        // Initial state
+        function updateDateFilterFields() {
+            if (noDateFilterCheckbox.checked) {
+                dateFilterGroup.style.display = 'none';
+            } else {
+                dateFilterGroup.style.display = 'block';
+            }
+        }
+        
+        // Setup event listener
+        noDateFilterCheckbox.addEventListener('change', updateDateFilterFields);
+        
+        // Initialize
+        updateDateFilterFields();
+        
+        // Address input type toggle
+        const addressTypeSelect = document.getElementById('address_type');
+        const singleAddressInput = document.querySelector('.single-address');
+        const multipleAddressInput = document.querySelector('.multiple-address');
+        
+        const singleAddressHelp = document.querySelector('.single-address-help');
+        const multipleAddressHelp = document.querySelector('.multiple-address-help');
+        const addressLabel = document.querySelector('.address-label');
+        
+        function updateAddressFields() {
+            const selectedType = addressTypeSelect.value;
+            
+            // Hide all
+            singleAddressInput.style.display = 'none';
+            singleAddressHelp.style.display = 'none';
+            multipleAddressInput.style.display = 'none';
+            multipleAddressHelp.style.display = 'none';
+            
+            // Remove required attribute from all
+            singleAddressInput.removeAttribute('required');
+            multipleAddressInput.removeAttribute('required');
+            
+            // Update label
+            if (selectedType === 'single') {
+                addressLabel.textContent = 'Blockchain Address';
+            } else if (selectedType === 'multiple') {
+                addressLabel.textContent = 'Blockchain Addresses';
+            }
+            
+            // Show selected
+            if (selectedType === 'single') {
+                singleAddressInput.style.display = 'block';
+                singleAddressHelp.style.display = 'block';
+                singleAddressInput.setAttribute('required', 'required');
+            } else if (selectedType === 'multiple') {
+                multipleAddressInput.style.display = 'block';
+                multipleAddressHelp.style.display = 'block';
+                multipleAddressInput.setAttribute('required', 'required');
+            }
+        }
+        
+        addressTypeSelect.addEventListener('change', updateAddressFields);
+        updateAddressFields();
+        
+        // Handle form submission
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const selectedType = addressTypeSelect.value;
+            
+            if (selectedType === 'multiple') {
+                // Convert textarea content to a hidden input with comma separated values
+                const addresses = multipleAddressInput.value.trim().split('\n').filter(line => line.trim().length > 0);
+                if (addresses.length === 0) {
+                    e.preventDefault();
+                    alert('Please enter at least one address');
+                    return;
+                }
+                
+                // Create hidden input for addresses
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'addresses_list';
+                hiddenInput.value = addresses.join(',');
+                form.appendChild(hiddenInput);
+            }
+        });
+        
+        // Handle delete modal
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                
+                // Extract preset name
+                const presetName = button.getAttribute('data-preset-name');
+                
+                // Update the modal's content
+                const modalPresetName = document.getElementById('presetNamePlaceholder');
+                const deletePresetNameInput = document.getElementById('delete_preset_name');
+                
+                modalPresetName.textContent = presetName;
+                deletePresetNameInput.value = presetName;
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Zero Network Exporter{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Dashboard</h1>
+        <p class="lead">View and manage your Zero Network transaction exports</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('export') }}" class="btn btn-primary mb-2 w-100">New Export</a>
+                
+                {% if presets %}
+                <div class="dropdown mt-3">
+                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="presetDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Run Saved Preset
+                    </button>
+                    <ul class="dropdown-menu w-100" aria-labelledby="presetDropdown">
+                        {% for name, preset in presets.items() %}
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('run_preset', name=name) }}">
+                                {{ name }} - {{ preset.address[:8] }}...
+                                {% if preset.no_date_filter %}
+                                <span class="badge bg-primary">No Date Filter</span>
+                                {% elif preset.start_date or preset.end_date %}
+                                <span class="badge bg-info">Date Filtered</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% else %}
+                <p class="text-muted mt-2">No saved presets found. <a href="{{ url_for('presets') }}">Create one</a> for quick exports.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Export Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card bg-dark mb-3">
+                            <div class="card-body text-center">
+                                <h3>{{ export_files|length }}</h3>
+                                <p class="card-text">Total Exports</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-dark mb-3">
+                            <div class="card-body text-center">
+                                <h3>{{ presets|length }}</h3>
+                                <p class="card-text">Saved Presets</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Exports</h5>
+            </div>
+            <div class="card-body">
+                {% if export_files %}
+                <div class="table-responsive">
+                    <table class="table table-hover transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Records</th>
+                                <th>Size</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in export_files %}
+                            <tr>
+                                <td>{{ file.name }}</td>
+                                <td>{{ file.rows }}</td>
+                                <td>{{ file.size }}</td>
+                                <td>{{ file.modified }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('view_export', file_path=file.path) }}" class="btn btn-info btn-sm" title="View">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{{ url_for('download_export', file_path=file.path) }}" class="btn btn-success btn-sm" title="Download">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No export files found. <a href="{{ url_for('export') }}">Create your first export</a>.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Export Status{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Export Status</h1>
+    
+    <div class="card">
+        <div class="card-header bg-dark">
+            <h5 class="card-title mb-0 text-white">Export Progress</h5>
+        </div>
+        <div class="card-body">
+            <div id="status-container">
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Processing your export request. Please wait...
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Progress:</strong></label>
+                    <div class="progress" style="height: 25px;">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%;" 
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Status
+                                <span id="status-badge" class="badge bg-info">Initializing</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Current Address
+                                <span id="current-address" class="badge bg-secondary text-truncate" style="max-width: 200px;">-</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Addresses Processed
+                                <span id="addresses-progress">0 / 0</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Current Page
+                                <span id="current-page">1</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Transactions Found
+                                <span id="total-transactions">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Elapsed Time
+                                <span id="elapsed-time">0s</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div id="error-container" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="error-message"></span>
+                </div>
+                
+                <div id="success-container" class="alert alert-success d-none" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Export completed successfully!
+                </div>
+                
+                <div id="actions-container" class="mt-3 text-center d-none">
+                    <a id="view-link" href="#" class="btn btn-primary me-2">
+                        <i class="bi bi-eye me-1"></i> View Export
+                    </a>
+                    <a id="download-link" href="#" class="btn btn-success me-2">
+                        <i class="bi bi-download me-1"></i> Download CSV
+                    </a>
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                        <i class="bi bi-house me-1"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jobId = '{{ job_id }}';
+        let intervalId;
+        let startTime = new Date();
+        let errorCount = 0;
+        
+        // Function to update the elapsed time
+        function updateElapsedTime() {
+            const now = new Date();
+            const elapsedSeconds = Math.floor((now - startTime) / 1000);
+            
+            if (elapsedSeconds < 60) {
+                document.getElementById('elapsed-time').textContent = `${elapsedSeconds}s`;
+            } else {
+                const minutes = Math.floor(elapsedSeconds / 60);
+                const seconds = elapsedSeconds % 60;
+                document.getElementById('elapsed-time').textContent = `${minutes}m ${seconds}s`;
+            }
+        }
+        
+        // Function to check the export status
+        function checkStatus() {
+            fetch(`/api/export_status/${jobId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Export job not found or completed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update progress bar
+                    const progress = data.progress || 0;
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${progress}%`;
+                    progressBar.setAttribute('aria-valuenow', progress);
+                    
+                    // Update status badge
+                    const statusBadge = document.getElementById('status-badge');
+                    statusBadge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                    
+                    if (data.status === 'running') {
+                        statusBadge.classList.remove('bg-success', 'bg-danger', 'bg-info');
+                        statusBadge.classList.add('bg-primary');
+                    } else if (data.status === 'completed') {
+                        statusBadge.classList.remove('bg-primary', 'bg-danger', 'bg-info');
+                        statusBadge.classList.add('bg-success');
+                        
+                        // Show success message and actions
+                        document.getElementById('success-container').classList.remove('d-none');
+                        document.getElementById('actions-container').classList.remove('d-none');
+                        
+                        // Set links
+                        if (data.output_file) {
+                            document.getElementById('view-link').href = `/view/${data.output_file}`;
+                            document.getElementById('download-link').href = `/download/${data.output_file}`;
+                        }
+                        
+                        // Stop polling
+                        clearInterval(intervalId);
+                    } else if (data.status === 'error') {
+                        statusBadge.classList.remove('bg-primary', 'bg-success', 'bg-info');
+                        statusBadge.classList.add('bg-danger');
+                        
+                        // Show error message
+                        const errorContainer = document.getElementById('error-container');
+                        errorContainer.classList.remove('d-none');
+                        document.getElementById('error-message').textContent = data.error || 'An unknown error occurred';
+                        
+                        // Show the Home button
+                        document.getElementById('actions-container').classList.remove('d-none');
+                        
+                        // Stop polling
+                        clearInterval(intervalId);
+                    }
+                    
+                    // Update other status information
+                    if (data.current_address) {
+                        document.getElementById('current-address').textContent = data.current_address;
+                    }
+                    
+                    document.getElementById('addresses-progress').textContent = 
+                        `${data.processed_addresses} / ${data.total_addresses}`;
+                    
+                    document.getElementById('current-page').textContent = data.current_page || 1;
+                    document.getElementById('total-transactions').textContent = data.total_transactions || 0;
+                    
+                    // Update elapsed time
+                    updateElapsedTime();
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                    
+                    // After several consecutive errors, assume the job is completed or failed
+                    // and redirect to home page
+                    errorCount++; 
+                    
+                    if (errorCount > 5) {
+                        // Show generic message and home button
+                        const errorContainer = document.getElementById('error-container');
+                        errorContainer.classList.remove('d-none');
+                        document.getElementById('error-message').textContent = 
+                            'Export process may have completed. Please check the home page for recent exports.';
+                        
+                        document.getElementById('actions-container').classList.remove('d-none');
+                        
+                        // Update status badge
+                        const statusBadge = document.getElementById('status-badge');
+                        statusBadge.textContent = 'Unknown';
+                        statusBadge.classList.remove('bg-primary', 'bg-success', 'bg-danger');
+                        statusBadge.classList.add('bg-secondary');
+                        
+                        // Set progress to uncertain
+                        const progressBar = document.getElementById('progress-bar');
+                        progressBar.classList.add('bg-secondary');
+                        
+                        // Stop polling
+                        clearInterval(intervalId);
+                    }
+                });
+        }
+        
+        // Start polling
+        checkStatus(); // Check immediately
+        intervalId = setInterval(checkStatus, 1000); // Then check every second
+        
+        // Also update elapsed time independently (more accurate)
+        setInterval(updateElapsedTime, 1000);
+    });
+</script>
+{% endblock %}

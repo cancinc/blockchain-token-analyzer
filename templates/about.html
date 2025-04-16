@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}About - Zero Network Exporter{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>About</h1>
+        <p class="lead">Zero Network Transaction Exporter</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3>Overview</h3>
+                <p>
+                    Zero Network Transaction Exporter is a tool designed to fetch blockchain token transactions from the 
+                    Zero Network API and export them to CSV format for analysis.
+                </p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li>Fetch token transactions from Zero Network Explorer API</li>
+                    <li>Process and format transaction data</li>
+                    <li>Export transactions to CSV with customizable fields</li>
+                    <li>Automatic pagination for retrieving large transaction sets</li>
+                    <li>Web interface for easy management and access to exports</li>
+                    <li>Date range filtering for transactions</li>
+                    <li>Export configuration preset management</li>
+                    <li>Direct CSV viewing in the browser</li>
+                    <li>Proper error handling and user feedback</li>
+                </ul>
+                
+                <h3>Usage Modes</h3>
+                <div class="card bg-dark mb-3">
+                    <div class="card-header">Web Interface</div>
+                    <div class="card-body">
+                        <p>
+                            The web interface provides an easy way to create exports, manage presets, 
+                            and view transaction data directly in your browser.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card bg-dark mb-3">
+                    <div class="card-header">Command Line Interface</div>
+                    <div class="card-body">
+                        <p>The tool can also be used from the command line:</p>
+                        <pre><code>python zero_network_exporter.py export 0xYourAddressHere</code></pre>
+                        <p>For full CLI documentation, refer to the README.md file.</p>
+                    </div>
+                </div>
+                
+                <h3>Date Filtering</h3>
+                <p>
+                    By default, when no date range is specified, the exporter will filter transactions between 
+                    February 1, 2025 and April 5, 2025. You can override this behavior by specifying your own 
+                    date range or disabling date filtering completely.
+                </p>
+                
+                <h3>Output Files</h3>
+                <p>
+                    By default, exports are saved to the <code>exports/</code> directory with auto-generated filenames that include:
+                </p>
+                <ul>
+                    <li>Transaction type (token or internal)</li>
+                    <li>Short address identifier</li>
+                    <li>Timestamp</li>
+                </ul>
+                <p>Example: <code>exports/tx_token_0x1234567_20250406_152030.csv</code></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('home') }}" class="list-group-item list-group-item-action">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door me-2" viewBox="0 0 16 16">
+                            <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('export') }}" class="list-group-item list-group-item-action">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-plus me-2" viewBox="0 0 16 16">
+                            <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5"/>
+                            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                        </svg>
+                        New Export
+                    </a>
+                    <a href="{{ url_for('presets') }}" class="list-group-item list-group-item-action">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmarks me-2" viewBox="0 0 16 16">
+                            <path d="M2 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v11.5a.5.5 0 0 1-.777.416L7 13.101l-4.223 2.815A.5.5 0 0 1 2 15.5z"/>
+                            <path d="M4.268 1A2 2 0 0 1 6 0h6a2 2 0 0 1 2 2v11.5a.5.5 0 0 1-.777.416L13 13.768V2a1 1 0 0 0-1-1H4.268z"/>
+                        </svg>
+                        Manage Presets
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">System Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-dark">
+                        <strong>API Base URL:</strong><br>
+                        <small class="text-muted">https://explorer.zero.network/api</small>
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Default Export Directory:</strong><br>
+                        <small class="text-muted">exports/</small>
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Default Contract:</strong><br>
+                        <small class="text-muted">0x00b1cA2C150920F4cA57701452c63B1bA2b4b758</small>
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <strong>Default Date Range:</strong><br>
+                        <small class="text-muted">Feb 1, 2025 - Apr 5, 2025</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
